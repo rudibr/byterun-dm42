@@ -400,47 +400,26 @@ static int draw_num_tiny(int x, int y, uint32_t v, int measure) {
 // ---------------------------------------------------------------------------
 //  Maze drawing
 // ---------------------------------------------------------------------------
-static int wopen(int tx, int ty) {  // open (non-wall) for outline purposes
-  if (tx < 0 || tx >= MW || ty < 0 || ty >= MH) return 0;
-  char c = maze[ty][tx];
-  return c != '#' && c != '-';
-}
-
-#define K 2  // outline inset inside a wall tile
+#include "walls.h"   // pre-rendered rounded, shaded walls (tools/gen_walls.py)
 
 static void draw_tile(int tx, int ty) {
   int px = MX0 + tx * TILE, py = MY0 + ty * TILE;
   plat_rect(px, py, TILE, TILE, 0);
   char c = maze[ty][tx];
-  if (c == '#') {
-    if (walls_hidden) return;
-    int u = wopen(tx, ty - 1), l = wopen(tx - 1, ty), d = wopen(tx, ty + 1), r = wopen(tx + 1, ty);
-    {  // 25 % grey fill inside the outline (ordered dither, aligned to the screen)
-      int gx0 = l ? K + 2 : 0, gx1 = r ? TILE - 3 - K : TILE - 1;
-      int gy0 = u ? K + 2 : 0, gy1 = d ? TILE - 3 - K : TILE - 1;
-      int cul = !u && !l && wopen(tx - 1, ty - 1), cur = !u && !r && wopen(tx + 1, ty - 1);
-      int cdl = !d && !l && wopen(tx - 1, ty + 1), cdr = !d && !r && wopen(tx + 1, ty + 1);
-      for (int y = gy0; y <= gy1; y++) {
-        int Y = py + y;
-        for (int x = gx0 + pmod((Y & 1) * 2 - (px + gx0), 4); x <= gx1; x += 4) {
-          int top = y <= K + 1, bot = y >= TILE - 2 - K, lf = x <= K + 1, rt = x >= TILE - 2 - K;
-          if ((cul && top && lf) || (cur && top && rt) || (cdl && bot && lf) || (cdr && bot && rt)) continue;
-          plat_rect(px + x, Y, 1, 1, 1);
-        }
+  if (!walls_hidden) {
+    for (int y = 0; y < TILE; y++) {
+      const uint8_t *row = wall_bmp + (ty * TILE + y) * WALL_BMP_STRIDE;
+      int bx = tx * TILE;
+      for (int x = 0; x < TILE;) {
+        int X = bx + x;
+        if (!((row[X >> 3] >> (X & 7)) & 1)) { x++; continue; }
+        int x0 = x;
+        while (x < TILE && ((row[(bx + x) >> 3] >> ((bx + x) & 7)) & 1)) x++;
+        plat_rect(px + x0, py + y, x - x0, 1, 1);
       }
     }
-    int y0 = u ? K : 0, y1 = d ? TILE - 1 - K : TILE - 1;
-    int x0 = l ? K : 0, x1 = r ? TILE - 1 - K : TILE - 1;
-    if (l) plat_rect(px + K, py + y0, 1, y1 - y0 + 1, 1);
-    if (r) plat_rect(px + TILE - 1 - K, py + y0, 1, y1 - y0 + 1, 1);
-    if (u) plat_rect(px + x0, py + K, x1 - x0 + 1, 1, 1);
-    if (d) plat_rect(px + x0, py + TILE - 1 - K, x1 - x0 + 1, 1, 1);
-    // inner corners
-    if (!u && !l && wopen(tx - 1, ty - 1)) { plat_rect(px, py + K, K + 1, 1, 1); plat_rect(px + K, py, 1, K + 1, 1); }
-    if (!u && !r && wopen(tx + 1, ty - 1)) { plat_rect(px + TILE - 1 - K, py + K, K + 1, 1, 1); plat_rect(px + TILE - 1 - K, py, 1, K + 1, 1); }
-    if (!d && !l && wopen(tx - 1, ty + 1)) { plat_rect(px, py + TILE - 1 - K, K + 1, 1, 1); plat_rect(px + K, py + TILE - 1 - K, 1, K + 1, 1); }
-    if (!d && !r && wopen(tx + 1, ty + 1)) { plat_rect(px + TILE - 1 - K, py + TILE - 1 - K, K + 1, 1, 1); plat_rect(px + TILE - 1 - K, py + TILE - 1 - K, 1, K + 1, 1); }
-  } else if (c == '-') {
+  }
+  if (c == '-') {
     if (walls_hidden) return;
     for (int i = 0; i < TILE; i += 2) plat_rect(px + i, py + 4, 1, 2, 1);
   } else if (c == '.') {

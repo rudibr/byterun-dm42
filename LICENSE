@@ -21,8 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 ---------------------------------------------------------------------------
-This license covers the BYTE RUN game code: src/game.c, src/game.h,
-src/plat.h, src/dm42_main.c, src/main.h and sim/.
+This license covers the BYTE RUN game code: src/game.c, src/game.h, src/walls.h,
+src/plat.h, src/dm42_main.c, src/main.h, tools/ and sim/.
 
 The DMCP SDK files (dmcp/, bin/, stm32_program.ld, src/menu.c, src/menu.h,
 src/qspi_crc.h, Makefile) are (c) SwissMicros GmbH and are distributed under
