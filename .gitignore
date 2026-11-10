@@ -1,0 +1,6 @@
+build/
+.dep/
+sim/sim
+sim/*.pgm
+sim/*.png
+sim/rec/
